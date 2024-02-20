@@ -1,6 +1,8 @@
 import os
 import sys
 from dotenv import load_dotenv
+from huggingface_hub import HfApi, hf_hub_download
+from huggingface_hub import HfFolder
 from langchain.chains import ConversationalRetrievalChain
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.document_loaders import TextLoader
@@ -9,9 +11,16 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
 load_dotenv('.env')
 
-def list_txt_documents(directory):
-    """List all .txt documents in the specified directory."""
-    return [file for file in os.listdir(directory) if file.endswith('.txt')]
+# Specify your Hugging Face repository ID
+repo_id = 'asaurasieu/debatebot'
+
+def list_hf_repository_files(repo_id):
+    """List all files in a specified Hugging Face Hub repository."""
+    api = HfApi()
+    folder = HfFolder()
+    folder.save_token("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")
+    available_docs = api.list_repo_files(repo_id)
+    return available_docs
 
 def select_document(docs):
     """Ask the user to select a document and return the selected document's name."""
@@ -20,6 +29,12 @@ def select_document(docs):
     selection = int(input("Select a document by number: ")) - 1
     return docs[selection]
 
+def fetch_hf_documents(repo_id, filename):
+    """Fetch a document from a Hugging Face Hub repository."""
+    api = HfApi()
+    file_path = hf_hub_download(repo_id=repo_id, filename=filename)
+    return file_path
+
 def load_and_process_document(file_path):
     """Load and process the selected .txt document."""
     loader = TextLoader(file_path)
@@ -27,18 +42,15 @@ def load_and_process_document(file_path):
     text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=10)
     return text_splitter.split_documents(documents)
 
-# Directory where documents are stored
-docs_folder = "./docs"
 
-# Step 1: List and allow the user to select a .txt document
-available_docs = list_txt_documents(docs_folder)
+
+available_docs = list_hf_repository_files(repo_id)
 selected_doc = select_document(available_docs)
-selected_doc_path = os.path.join(docs_folder, selected_doc)
+document_path = fetch_hf_documents(repo_id, selected_doc)
+document_chunks = load_and_process_document(document_path)
 
-# Step 2: Load and process the selected document
-document_chunks = load_and_process_document(selected_doc_path)
 
-# Step 3: Initialize the vector store with embeddings from the selected document
+# Initialize the vector store with embeddings from the selected document
 vectordb = Chroma.from_documents(document_chunks, embedding=OpenAIEmbeddings(), persist_directory="./data")
 vectordb.persist()
 
@@ -57,7 +69,7 @@ white = "\033[0;39m"
 chat_history = []
 
 print(f"{yellow}---------------------------------------------------------------------------------")
-print(f"Welcome to the Document Interaction Bot. Ready to interact with: {selected_doc}")
+print(f"Welcome to the Debate Bot. Ready to interact with: {selected_doc}")
 print('---------------------------------------------------------------------------------')
 
 # Interaction loop

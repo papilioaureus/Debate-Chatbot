@@ -9,12 +9,18 @@ with open(here.joinpath("debchatlib", "__init__.py"), "r") as f:
 version = version_data.get("__version__", "0.0")
 
 install_requires = [
-    "numpy>=1.19",  # 1.19 required by tensorflow 2.6
-    "pandas>1.0.3,<2",
-    "ipykernel>=4.6.1,<7",
-    "jupyter>=1,<2",
-    "black>=18.6b4,<21",
-    "pytest>=3.6.4",
+    "python-dotenv>=1.0.0"
+    , "huggingface-hub>=0.20.2"
+    , "langchain>=0.1.0"
+    , "langchain-community>=0.0.12"
+    , "langchain-openai>=0.0.3"
+    , "openai>=1.7.2"
+    , "transformers>=4.35.0"
+    , "torch>=2.2.0"
+    , "torchaudio>=2.2.0"
+    , "torchvision>=0.17.0"
+    , "accelerate>=0.21.0"
+    , "ipywidgets>=8.1.2"
 ]
 
 setup(

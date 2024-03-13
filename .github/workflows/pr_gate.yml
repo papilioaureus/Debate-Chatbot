@@ -1,26 +1,26 @@
-name: PR gate
+# name: PR gate
 
-on:
-  push:
-    branches:
-    - main
+# on:
+#   push:
+#     branches:
+#     - main
 
-  pull_request:
-    # Only trigger the workflow with a PR to main
-    branches:
-    - main
+#   pull_request:
+#     # Only trigger the workflow with a PR to main
+#     branches:
+#     - main
 
-  # Enable manual trigger
-  workflow_dispatch:
-    input:
-      tags:
-        description: 'Tags to label this manual run (optional)'
-        default: 'Manual run'
+#   # Enable manual trigger
+#   workflow_dispatch:
+#     input:
+#       tags:
+#         description: 'Tags to label this manual run (optional)'
+#         default: 'Manual run'
 
-# Automatically cancel previous workflows if a new one is executed
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+# # Automatically cancel previous workflows if a new one is executed
+# concurrency:
+#   group: ${{ github.workflow }}-${{ github.ref }}
+#   cancel-in-progress: true
 
 # jobs:
 #   test:

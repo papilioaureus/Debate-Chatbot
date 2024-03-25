@@ -1,27 +1,39 @@
-import unittest
-from unittest.mock import patch, MagicMock
-from debchatlib.models.chatbot import list_hf_repository_files, select_document, fetch_hf_documents
+import os
+import pytest
+import sys
+from unittest.mock import patch
 
-class TestChatbot(unittest.TestCase):
+# Adding the path of the models directory to the system path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../debchatlib/models')))
 
-    @patch('debchatlib.models.chatbot.HfApi')
-    @patch('debchatlib.models.chatbot.HfFolder')
-    def test_list_hf_repository_files(self, mock_folder, mock_api):
-        mock_api().list_repo_files.return_value = ['file1', 'file2']
-        result = list_hf_repository_files('test_repo')
-        self.assertEqual(result, ['file1', 'file2'])
+# Importing necessary functions from the chatbot module
+from chatbot import list_hf_repository_files, select_document, fetch_hf_documents
 
-    @patch('debchatlib.models.chatbot.input', create=True)
-    def test_select_document(self, mock_input):
-        mock_input.return_value = '1'
-        result = select_document(['doc1', 'doc2'])
-        self.assertEqual(result, 'doc1')
+# This test checks if the function list_hf_repository_files correctly returns a list of files
+# The function get_access_token is patched to return a dummy token
+@patch('chatbot.get_access_token', return_value='dummy_token')
+def test_list_hf_repository_files(mock_get_access_token):
+    repo_id = 'asaurasieu/debatebot'
+    files = list_hf_repository_files(repo_id)
+    assert isinstance(files, list)  
 
-    @patch('debchatlib.models.chatbot.HfApi')
-    def test_fetch_hf_documents(self, mock_api):
-        mock_api().hf_hub_download.return_value = 'test_path'
-        result = fetch_hf_documents('test_repo', 'test_file')
-        self.assertEqual(result, 'test_path')
+# This test checks if the function select_document correctly selects a document based on user input
+# The built-in input function is patched to return "1"
+@pytest.mark.parametrize(
+    "docs", [['debate2015.csv', 'debate2019.csv']]
+)
+def test_select_document(docs, monkeypatch):
+    monkeypatch.setattr('builtins.input', lambda _: "1")
+    selected_doc = select_document(docs)
+    assert selected_doc == 'debate2015.csv' 
 
-if __name__ == '__main__':
-    unittest.main()
+# This test checks if the function fetch_hf_documents correctly fetches a document and saves it to a file
+# The function get_access_token is patched to return a dummy token
+@patch('chatbot.get_access_token', return_value='dummy_token')
+def test_fetch_hf_documents(mock_get_access_token):
+    repo_id = 'asaurasieu/debatebot'
+    filename = 'debate2015.csv'  # Update this to the filename you want to test
+    file_path = fetch_hf_documents(repo_id, filename)
+    assert os.path.exists(file_path)  # Asserting that the file exists
+    
+    

@@ -1,5 +1,7 @@
 from unittest.mock import patch, mock_open
 import pytest
+import sys
+sys.path.insert(0, 'debchatlib/models/chatbot.py')
 from chatbot import list_hf_repository_files, select_document, fetch_hf_documents, load_and_process_document
 
 @pytest.fixture

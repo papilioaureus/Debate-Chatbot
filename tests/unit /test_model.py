@@ -1,20 +1,21 @@
 from unittest.mock import patch, mock_open
 import pytest
+from unittest.mock import patch, mock_open
 import sys
 sys.path.insert(0, 'debchatlib/models/chatbot.py')
 from chatbot import list_hf_repository_files, select_document, fetch_hf_documents, load_and_process_document
 
 @pytest.fixture
 def mock_api(mocker):
-    return mocker.patch('chatbot.py.HfApi')
+    return mocker.patch('huggingface_hub.HfApi')
 
 @pytest.fixture
 def mock_env(mocker):
-    return mocker.patch('chatbot.py.os.getenv', return_value='dummy_token')
+    return mocker.patch('os.getenv', return_value='dummy_token')
 
 @pytest.fixture
 def mock_folder(mocker):
-    return mocker.patch('chatbot.py.HfFolder')
+    return mocker.patch('huggingface_hub.HfFolder')
 
 def test_list_hf_repository_files(mock_api, mock_env, mock_folder):
     mock_api.list_repo_files.return_value = ['debate2019.csv', 'Ukraine_text.txt']
@@ -34,6 +35,6 @@ def test_fetch_hf_documents(mock_api):
 
 def test_load_and_process_document(mocker):
     mocker.patch('builtins.open', mock_open(read_data="This is a test."))
-    mocker.patch('chatbot.py.TextLoader').return_value.load.return_value = ["This is a test."]
-    mocker.patch('chatbot.py.CharacterTextSplitter').return_value.split_documents.return_value = ["This is a test."]
+    mocker.patch('chatbot.TextLoader').return_value.load.return_value = ["This is a test."]
+    mocker.patch('chatbot.CharacterTextSplitter').return_value.split_documents.return_value = ["This is a test."]
     result = load_and_process_document('/asaurasieu/debatebot/debate2019.csv')

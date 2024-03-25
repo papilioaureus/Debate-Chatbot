@@ -2,9 +2,9 @@ name: debatebot_backend
 
 on:
     push:
-      branches: [ "main" ]
+      branches: [ "ana" ]
     pull_request:
-      branches: [ "main" ]
+      branches: [ "ana" ]
     workflow_dispatch:
 
 permissions:

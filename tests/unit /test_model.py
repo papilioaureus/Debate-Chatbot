@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch, mock_open
 
 # Let's pretend that these are your original functions
 # In reality, these would be the actual implementations

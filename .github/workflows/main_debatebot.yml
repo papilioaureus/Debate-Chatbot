@@ -2,13 +2,15 @@
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 # More info on Python, GitHub Actions, and Azure App Service: https://aka.ms/python-webapps-actions
 
-name: Build and deploy Python app to Azure Web App - Debatebot
+name: Debatebot
 
 on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+    push:
+      branches: [ "ana" ]
+    pull_request:
+      branches: [ "ana" ]
+    workflow_dispatch:
+
 
 jobs:
   build:
@@ -27,10 +29,24 @@ jobs:
           python -m venv venv
           source venv/bin/activate
       
+      - name: Upgrade pip
+        run: |
+          python -m pip install --upgrade pip
+          
       - name: Install dependencies
         run: pip install -r requirements.txt
         
-      # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
+      - name: Lint with flake8
+        run: |
+          pip install flake8 pytest
+          # stop the build if there are Python syntax errors or undefined names
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+      - name: Test with pytest
+        run: |
+          python -m pytest --cov -v
 
       - name: Zip artifact for deployment
         run: zip release.zip ./* -r

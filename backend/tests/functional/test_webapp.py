@@ -1,4 +1,4 @@
-from flask_testing import TestCase
+#from flask_testing import TestCase
 #from your_web_app_module import create_app
 
 #class TestDebateBotWebApp(TestCase):

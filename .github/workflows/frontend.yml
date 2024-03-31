@@ -27,13 +27,13 @@ jobs:
       - name: npm install, build, and test
         run: |
           npm install
-          npm run build -- --mode development --dest dist-dev ## this command will build the vue.js app using .env.development variables into the dest-div/ folder
+          npm run build 
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v3
         with:
           name: node-app-dev
-          path: dist-dev/
+          path: Debate-Chatbot/frontend
 
   deploy:
     runs-on: ubuntu-latest
@@ -46,7 +46,7 @@ jobs:
       - name: Download artifact from build job
         uses: actions/download-artifact@v2
         with:
-          name: node-app-dev
+          name: node-app
       
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3

@@ -29,6 +29,7 @@ jobs:
           npm install
           npm run build 
           npm run test 
+        working-directory: ./
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v3

@@ -4,14 +4,14 @@ import sys
 from unittest.mock import patch, Mock 
 
 # Adding the path of the models directory to the system path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../debchatlib/models')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../Debate-Chatbot")))
 
 # Importing necessary functions from the chatbot module
-from chatbot import list_hf_repository_files, select_document, fetch_hf_documents, load_and_process_document
+from chatbottest import list_hf_repository_files, select_document, fetch_hf_documents, load_and_process_document
 
 # This test checks if the function list_hf_repository_files correctly returns a list of files
 # The function get_access_token is patched to return a dummy token
-@patch('chatbot.get_access_token', return_value='dummy_token')
+@patch('chatbottest.get_access_token', return_value='dummy_token')
 def test_list_hf_repository_files(mock_get_access_token):
     repo_id = 'asaurasieu/debatebot'
     files = list_hf_repository_files(repo_id)
@@ -29,7 +29,7 @@ def test_select_document(docs, monkeypatch):
 
 # This test checks if the function fetch_hf_documents correctly fetches a document and saves it to a file
 # The function get_access_token is patched to return a dummy token
-@patch('chatbot.get_access_token', return_value='dummy_token')
+@patch('chatbottest.get_access_token', return_value='dummy_token')
 def test_fetch_hf_documents(mock_get_access_token):
     repo_id = 'asaurasieu/debatebot'
     filename = 'debate2015.csv'  # Update this to the filename you want to test
@@ -39,7 +39,7 @@ def test_fetch_hf_documents(mock_get_access_token):
 
 def test_load_and_process_document():
     # Mocking the TextLoader and CharacterTextSplitter classes
-    with patch('chatbot.TextLoader') as MockTextLoader, patch('chatbot.CharacterTextSplitter') as MockCharacterTextSplitter:
+    with patch('chatbottest.TextLoader') as MockTextLoader, patch('chatbottest.CharacterTextSplitter') as MockCharacterTextSplitter:
         mock_loader = Mock()
         mock_splitter = Mock()
         MockTextLoader.return_value = mock_loader

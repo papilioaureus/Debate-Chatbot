@@ -43,12 +43,10 @@ const ChatPage = () => {
         try {
             const response = await axios.get('/api/check-connection', {
                 headers: {
-                    'Content-Length': 0,
-                    'Content-Type': 'text/plain',
-                    'User-Agent': 'axios/0.21.1'
                 }
             });
             setBackendMessage(response.data.message);
+
         } catch (error) {
             setBackendMessage('Error connecting to the backend');
         }

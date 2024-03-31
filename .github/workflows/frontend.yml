@@ -9,7 +9,7 @@ on:
 
 env:
   AZURE_WEBAPP_NAME: Debatebot 
-  AZURE_WEBAPP_PACKAGE_PATH: '.' # set this to the path to your web app project, defaults to the repository root
+  AZURE_WEBAPP_PACKAGE_PATH: './frontend' # set this to the path to your web app project, defaults to the repository root
 
 jobs:
   build:
@@ -23,6 +23,7 @@ jobs:
         with:
           node-version: '18.x'
           cache: 'npm'
+          cache-dependency-path: frontend/package-lock.
 
       - name: npm install, build, and test
         run: |
@@ -48,6 +49,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: debate-chatbot-build
+          path: frontend/build
       
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
@@ -56,5 +58,5 @@ jobs:
           app-name: 'Debatebot'
           slot-name: 'Production'
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: '.'
+          package: './frontend'
   

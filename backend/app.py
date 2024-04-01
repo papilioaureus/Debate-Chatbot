@@ -1,15 +1,15 @@
 from flask import Flask, jsonify, request
 from database_endpoint import list_available_documents, get_document_content,load_and_process_document
-from langchain_endpoint import initialize_vectordb_with_document, vectordb_cache
 from keywords import search_for_query
 from request import url 
 import openai
 import logging
-import requests
 import json
+from flask_cors import CORS
+
 
 app = Flask(__name__)
-
+CORS(app)
 
 @app.route('/', methods=['GET'])
 def home():

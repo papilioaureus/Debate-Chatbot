@@ -2,9 +2,9 @@ name: debate-chatbot-ci-cd
 
 on:
     push:
-      branches: [ "ana" ]
+      branches: [ "frontend_deploy" ]
     pull_request:
-      branches: [ "ana" ]
+      branches: [ "frontend_deploy" ]
     workflow_dispatch:
 
 env:

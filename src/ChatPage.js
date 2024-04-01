@@ -4,27 +4,10 @@ const ChatPage = () => {
     const [messages, setMessages] = useState([]);
     const [currentMessage, setCurrentMessage] = useState('');
 
-    const handleSendMessage = async (e) => {
+    const handleSendMessage = (e) => {
         e.preventDefault(); // Prevent the form from refreshing the page
         if (!currentMessage.trim()) return; // Ignore empty messages
-
-        try {
-            const response = await fetch('http://127.0.0.1:5000/ask', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ user_input: currentMessage }),
-            });
-
-            const data = await response.json();
-            if (data.answer) {
-                setMessages([...messages, { user: currentMessage, bot: data.answer }]);
-            }
-        } catch (error) {
-            console.error('Error:', error);
-        }
-
+        setMessages([...messages, currentMessage]);
         setCurrentMessage(''); // Clear the input field after sending
     };
 
@@ -35,10 +18,7 @@ const ChatPage = () => {
                 <h2>Chat with Us</h2>
                 <div>
                     {messages.map((msg, index) => (
-                        <div key={index}>
-                            <p><strong>User:</strong> {msg.user}</p>
-                            <p><strong>Bot:</strong> {msg.bot}</p>
-                        </div>
+                        <p key={index}>{msg}</p>
                     ))}
                 </div>
                 <form onSubmit={handleSendMessage}>

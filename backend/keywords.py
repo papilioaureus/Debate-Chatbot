@@ -2,7 +2,6 @@ from collections import defaultdict
 import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
-from collections import defaultdict
 from database_endpoint import load_and_process_document
 
 # Download necessary NLTK data (if not already done)

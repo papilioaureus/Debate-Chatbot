@@ -1,27 +1,48 @@
-# import pytest 
-# import sys 
-# import os 
-# from backend.debatebot_api import app 
+import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+import json
+from flask_testing import TestCase
+import pytest
+from app import app  
 
-# def test_index_route():
-#     """
-#     GIVEN a Flask application
-#     WHEN the '/' page is requested (GET)
-#     THEN check the response is valid
-#     """
-#     with app.test_client() as client:
-#         response = client.get('/')
-#         assert response.status_code == 200
-#         assert b'<!DOCTYPE html>' in response.data  
-        
-# def test_dummy_wrong_path():
-#     """
-#     GIVEN a Flask application
-#     WHEN the '/wrong_path' page is requested (GET)
-#     THEN check the response is valid
-#     """
-#     with app.test_client() as client:
-#         response = client.get('/wrong_path')
-#         assert response.status_code == 404
-        
-        
+@pytest.fixture
+def client():
+    with app.test_client() as client:
+        yield client
+
+def test_home_endpoint(client):
+    """Test the home endpoint."""
+    response = client.get('/')
+    assert response.status_code == 200
+    assert response.json == {'message': 'Welcome to the Langchain API!'}
+
+def test_list_documents(client):
+    """Test the documents listing endpoint."""
+    response = client.get('/documents')
+    assert response.status_code == 200
+    assert isinstance(response.json, list)  
+    
+class TestGetDocument(TestCase):
+    def create_app(self):
+        app.config['TESTING'] = True
+        return app
+
+    def test_get_document(self):
+        document_name = 'Ukraine_text.txt'
+        response = self.client.get(f'/documents/{document_name}')
+        self.assertEqual(response.status_code, 200)
+ 
+
+def test_get_document_failure(client):
+    """Test retrieving a non-existing document."""
+    response = client.get('/documents/non_existing_document')
+    assert response.status_code == 500
+    assert 'error' in response.json 
+
+def test_ask_question(client):
+    """Test the ask question endpoint."""
+    data = {"user_input": "Example question"}
+    response = client.post('/ask', json=data)
+    assert response.status_code == 200
+  

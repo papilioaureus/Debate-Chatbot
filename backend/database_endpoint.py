@@ -51,7 +51,7 @@ def get_document_content(document_name):
     return content
       
 
-def load_and_process_document(content, chunk_size=1000, chunk_overlap=10):
+def load_and_process_document(content, chunk_size=5000, chunk_overlap=10):
     """
     Splits the 'Full_Document' content into manageable chunks for vector embedding.
 

@@ -1,49 +1,44 @@
 import os
-import pytest 
 import sys
-from unittest.mock import patch, Mock 
-from database_endpoint import list_hf_repository_files, list_available_documents, load_and_process_document
 
 # Adding the path of the models directory to the system path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../backend/database_endpoint.py")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
-# This test checks if the function list_hf_repository_files correctly returns a list of files
-@patch('database_endpoint.get_access_token', return_value='dummy_token')
-def test_list_hf_repository_files(mock_get_access_token):
-    repo_url = 'https://huggingface.co/asaurasieu/debatebot'
-    files = list_hf_repository_files(repo_url)
-    assert isinstance(files, list)  
-
-# This test checks if the function list_available_documents correctly returns a list of .txt and .csv documents
-# The built-in input function is patched to return "1"
-@pytest.mark.parametrize(
-    "docs", [['debate2015.csv', 'debate2019.csv']]
-)
-def test_list_available_documents(docs, monkeypatch):
-    monkeypatch.setattr('builtins.input', lambda _: "1")
-    documents = list_available_documents()
-    assert isinstance(documents, list)
-    assert all(doc.endswith('.txt') or doc.endswith('.csv') for doc in documents)
-    assert documents[0] == 'debate2015.csv'
+import pytest 
+from unittest.mock import patch, MagicMock
+from database_endpoint import list_hf_repository_files, list_available_documents, load_and_process_document
 
 
+@pytest.fixture
+def mock_response():
+    with patch('requests.get') as mock_get:
+        mock_response = MagicMock()
+        mock_response.raise_for_status = MagicMock()
+        mock_response.text = '<html><body><a class="Link--active" href="/repo/file1.txt">file1.txt</a><a class="Link--active" href="/repo/file2.csv">file2.csv</a></body></html>'
+        mock_get.return_value = mock_response
+        yield mock_get
+
+def test_list_hf_repository_files(mock_response):
+    expected_files = ['file1.txt', 'file2.csv']
+    files = list_hf_repository_files('https://huggingface.co/asaurasieu/debatebot')
+    assert files == expected_files
+    mock_response.assert_called_once()
+    
+
+@pytest.fixture
+def mock_api():
+    with patch('database_endpoint.HfApi.list_repo_files') as mock_list_repo_files:
+        mock_list_repo_files.return_value = ['document1.txt', 'data.csv', 'image.png']
+        yield mock_list_repo_files
+
+def test_list_available_documents(mock_api):
+    expected_docs = ['document1.txt', 'data.csv']
+    docs = list_available_documents()
+    assert docs == expected_docs
+    mock_api.assert_called_once()
+    
 def test_load_and_process_document():
-    # Mocking the TextLoader and CharacterTextSplitter classes
-    with patch('database_endpoint.CharacterTextSplitter') as MockCharacterTextSplitter:
-        mock_loader = Mock()
-        mock_splitter = Mock()
-        MockCharacterTextSplitter.return_value = mock_splitter
-
-        # Mocking the load and split_documents methods
-        mock_loader.load.return_value = 'documents'
-        mock_splitter.split_documents.return_value = 'split documents'
-
-        # Testing the load_and_process_document function
-        result = load_and_process_document('file_path')
-
-        # Verifying that the load and split_documents methods were called
-        mock_loader.load.assert_called_once()
-        mock_splitter.split_documents.assert_called_once_with('documents')
-
-        # Asserting that the function returned the expected result
-        assert result == 'split documents'
+    content = "This is a test document content for testing."
+    expected_chunks = ["This is a test document content for testing."]  
+    chunks = load_and_process_document(content, chunk_size=5000, chunk_overlap=10)
+    assert chunks == expected_chunks

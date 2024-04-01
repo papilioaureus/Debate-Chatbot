@@ -1,9 +1,19 @@
 from flask import Flask, jsonify, request
-from database_endpoint import list_available_documents, get_document_content
-from langchain_endpoint import get_relevant_content_from_vectordb
+from database_endpoint import list_available_documents, get_document_content,load_and_process_document
+from langchain_endpoint import initialize_vectordb_with_document, vectordb_cache
+from keywords import search_for_query
+from request import url 
 import openai
+import logging
+import requests
+import json
 
 app = Flask(__name__)
+
+
+@app.route('/', methods=['GET'])
+def home():
+    return jsonify({'message': 'Welcome to the Langchain API!'})
 
 @app.route('/documents', methods=['GET'])
 def list_documents():
@@ -13,13 +23,33 @@ def list_documents():
 
 @app.route('/documents/<string:document_name>', methods=['GET'])
 def get_document(document_name):
-    content = get_document_content(document_name)
-    if isinstance(content, list):
-        # Return a list of dicts if it's a CSV file
-        return jsonify(content)
-    else:
-        # Return a string wrapped in a dict if it's a text file
-        return jsonify({"content": content})
+    try:
+        # Retrieve content from the document
+        raw_content = get_document_content(document_name)
+        processed_content = []
+
+        # Process the content based on its type
+        if isinstance(raw_content, list):
+            # Process each document's content for embedding if it's from a CSV
+            processed_content = [load_and_process_document(doc) for doc in raw_content if doc.strip()]
+        elif isinstance(raw_content, str) and raw_content.strip():
+            # If it's a string and contains something other than whitespace
+            try:
+                # Attempt to parse it as JSON and extract the 'content' key
+                json_content = json.loads(raw_content)
+                text_content = json_content.get('content', '')
+                # Process the extracted text for embedding
+                processed_content = load_and_process_document(text_content)
+            except json.JSONDecodeError:
+                # If it's not JSON, it might be plain text, so process it directly
+                processed_content = load_and_process_document(raw_content)
+
+        # Return the processed content
+        return jsonify(processed_content)
+
+    except Exception as e:
+        # Handle any unexpected errors
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/', defaults={'path': ''}, methods=['GET'])
@@ -29,24 +59,45 @@ def catch_all(path):
         return list_available_documents()
     else:
         return jsonify({'message': 'Please access the /documents endpoint for the available documents.'})
+
+logging.basicConfig(level=logging.INFO)
+
+
+@app.route('/ask', methods=['POST'])
+def ask_question():
+    user_input = request.json.get('user_input')
+    # Search for query in the document chunks and get matched chunk indices
     
-@app.route('/chat', methods=['POST'])
-def chat_endpoint():
-    user_input = request.json.get('message', '')
-    document_name = request.json.get('document_name', '')
+    matched_chunks_info = search_for_query(user_input)
+    relevant_content = []
+    for document_name, chunk_indices in matched_chunks_info.items():
+        # Ensure to modify load_and_process_document to accept a chunk_index parameter
+        for chunk_index in chunk_indices:
+            # Now the function is expected to retrieve a specific chunk by index
+            chunk_content = load_and_process_document(document_name, chunk_index=chunk_index)
+            relevant_content.append(chunk_content)
 
-    relevant_content = get_relevant_content_from_vectordb(document_name, user_input)
+    # Combine all relevant content into a single string for the response
+    combined_content = " ".join(relevant_content)
 
-    response = openai.Completion.create(
-        model="gpt-3.5-turbo",
-        prompt=f"Based on the document, here is the information relevant to your question:\n{relevant_content}\n\nCan you provide more detailed information on this?",
-        max_tokens=4000,
+    messages = [
+        {"role": "system", "content": "You are a knowledgeable assistant."},
+        {"role": "user", "content": user_input},
+        {"role": "assistant", "content": f"Based on the document content: {combined_content}"}
+    ]
+
+    # Make a request to the OpenAI API to get the response using the chat model
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",  # Adjust model version if necessary
+        messages=messages,
         temperature=0.7
     )
+
+    # Extract the assistant's last message as the response
+    last_message = response.choices[-1]['message']['content']
     
-    answer = response.choices[0].text.strip()
-    return jsonify({'response': answer})
-    
+    # Return the assistant's response along with the source information
+    return jsonify({'answer': last_message.strip()})
     
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

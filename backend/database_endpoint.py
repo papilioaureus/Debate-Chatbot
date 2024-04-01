@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 from huggingface_hub import HfApi, hf_hub_download, HfFolder
 import csv
 from io import StringIO
+import re 
 from langchain.text_splitter import CharacterTextSplitter
 
 
@@ -36,23 +37,37 @@ def list_available_documents():
 
 def get_document_content(document_name):
     file_path = hf_hub_download(repo_id=repo_id, filename=document_name, use_auth_token=False)
+    content = []
+
     with open(file_path, mode='r', encoding='utf-8') as f:
         if document_name.endswith('.csv'):
-            # Read the CSV file into a list of dictionaries
             reader = csv.DictReader(f)
-            content = list(reader)  # Each row is a dict
-        else:
+            for row in reader:
+                # Directly take the text from 'Full_Document', no JSON parsing needed
+                content.append(row.get('Full-Document', ''))
+        elif document_name.endswith('.txt'):
             content = f.read()
     os.remove(file_path)
     return content
+      
+
+def load_and_process_document(content, chunk_size=1000, chunk_overlap=10):
+    """
+    Splits the 'Full_Document' content into manageable chunks for vector embedding.
+
+    Args:
+    full_document (str): The string content of the 'Full_Document'.
+    chunk_size (int): The size of each chunk in characters.
+    chunk_overlap (int): The number of characters that overlap between consecutive chunks.
+
+    Returns:
+    list of str: The list of text chunks after splitting.
+    """
+    text_splitter = CharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
+    text_chunks = text_splitter.split_text(content)
+    return text_chunks
 
 
-def load_and_process_document(text_content):
-    """
-    Directly process the text content without loading from a file.
-    Split the provided text content into manageable chunks.
-    """
-    text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=10)
-    # Directly split the text content instead of loading from a file.
-    processed_documents = text_splitter.split_documents([text_content])  # Ensure text_content is a list
-    return processed_documents
+
+            
+            

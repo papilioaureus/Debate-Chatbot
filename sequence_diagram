@@ -1,0 +1,17 @@
+digraph {
+	Person [color=blue]
+	"Hi there!"
+	Person -> "Hi there!" [label=1 color=blue]
+	Chatbot [color=green]
+	"Hello! How can I help you today?"
+	Person -> Chatbot [label=2 color=blue]
+	Chatbot -> "Hello! How can I help you today?" [label=3 color=green]
+	Person [color=blue]
+	"I'd like to know about your products."
+	Chatbot -> Person [label=4 color=green]
+	Person -> "I'd like to know about your products." [label=5 color=blue]
+	Chatbot [color=green]
+	"Sure, we offer a variety of products. What specifically are you interested in?"
+	Person -> Chatbot [label=6 color=blue]
+	Chatbot -> "Sure, we offer a variety of products. What specifically are you interested in?" [label=7 color=green]
+}

@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
-from database_endpoint import list_available_documents, get_document_content,load_and_process_document
-from keywords import search_for_query
+from database_endpoint import list_available_documents, get_document_content,load_and_process_document, load_paragraph_dict_from_file
+from keywords import search_for_query, load_and_index_documents
 from request import url 
 import openai
 import logging
@@ -10,6 +10,13 @@ from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app)
+
+def load_and_index_documents():
+    # Your document loading and indexing code here...
+    print("Documents have been loaded and indexed.")
+
+# Run the function once at the start of your application
+load_and_index_documents()
 
 @app.route('/', methods=['GET'])
 def home():
@@ -23,33 +30,19 @@ def list_documents():
 
 @app.route('/documents/<string:document_name>', methods=['GET'])
 def get_document(document_name):
-    try:
-        # Retrieve content from the document
-        raw_content = get_document_content(document_name)
-        processed_content = []
+    # List available documents to check if the requested document exists
+    available_docs = list_available_documents()
 
-        # Process the content based on its type
-        if isinstance(raw_content, list):
-            # Process each document's content for embedding if it's from a CSV
-            processed_content = [load_and_process_document(doc) for doc in raw_content if doc.strip()]
-        elif isinstance(raw_content, str) and raw_content.strip():
-            # If it's a string and contains something other than whitespace
-            try:
-                # Attempt to parse it as JSON and extract the 'content' key
-                json_content = json.loads(raw_content)
-                text_content = json_content.get('content', '')
-                # Process the extracted text for embedding
-                processed_content = load_and_process_document(text_content)
-            except json.JSONDecodeError:
-                # If it's not JSON, it might be plain text, so process it directly
-                processed_content = load_and_process_document(raw_content)
-
-        # Return the processed content
+    # Check if the document_name exists in the available documents
+    if document_name in available_docs:
+        # Try to load processed content from the file
+        processed_content = load_paragraph_dict_from_file(document_name)
+        if processed_content is None:  # If the content is not processed, process it now
+            content = get_document_content(document_name)
+            processed_content = load_and_process_document(content, document_name)
         return jsonify(processed_content)
-
-    except Exception as e:
-        # Handle any unexpected errors
-        return jsonify({'error': str(e)}), 500
+    else:
+        return jsonify({'error': 'Document not found.'}),
 
 
 @app.route('/', defaults={'path': ''}, methods=['GET'])
@@ -62,42 +55,57 @@ def catch_all(path):
 
 logging.basicConfig(level=logging.INFO)
 
-
+    
 @app.route('/ask', methods=['POST'])
 def ask_question():
     user_input = request.json.get('user_input')
-    # Search for query in the document chunks and get matched chunk indices
-    
-    matched_chunks_info = search_for_query(user_input)
+    matched_content = search_for_query(user_input)
+    print("matched_content: ", matched_content)
     relevant_content = []
-    for document_name, chunk_indices in matched_chunks_info.items():
-        # Ensure to modify load_and_process_document to accept a chunk_index parameter
-        for chunk_index in chunk_indices:
-            # Now the function is expected to retrieve a specific chunk by index
-            chunk_content = load_and_process_document(document_name, chunk_index=chunk_index)
-            relevant_content.append(chunk_content)
 
-    # Combine all relevant content into a single string for the response
+    for document_name, chunk_indices in matched_content.items():
+        for index in chunk_indices:
+            paragraph_dict = load_paragraph_dict_from_file(document_name)
+            print("paragraph_dict: ", paragraph_dict)
+            if paragraph_dict:
+                relevant_content.append(paragraph_dict.get(index, ''))
+
     combined_content = " ".join(relevant_content)
-
     messages = [
         {"role": "system", "content": "You are a knowledgeable assistant."},
         {"role": "user", "content": user_input},
         {"role": "assistant", "content": f"Based on the document content: {combined_content}"}
     ]
 
-    # Make a request to the OpenAI API to get the response using the chat model
+    # Assuming you have already configured the OpenAI API
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",  # Adjust model version if necessary
         messages=messages,
         temperature=0.7
     )
 
-    # Extract the assistant's last message as the response
     last_message = response.choices[-1]['message']['content']
-    
-    # Return the assistant's response along with the source information
     return jsonify({'answer': last_message.strip()})
+
     
+    
+# @app.route('/search')
+# def search():
+#     query = request.args.get('query', '')
+#     matched_content = search_for_query(query)
+    
+#     # Enhance the response structure to include document names and paragraph indices
+#     enriched_response = []
+#     for document_name, paragraphs in matched_content.items():
+#         for index, text in paragraphs.items():
+#             enriched_response.append({
+#                 'document': document_name,
+#                 'paragraph_index': index,
+#                 'text': text
+#             })
+
+#     return jsonify({'matches': enriched_response})
+
+   
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

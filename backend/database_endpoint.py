@@ -8,7 +8,7 @@ from huggingface_hub import HfApi, hf_hub_download, HfFolder
 import csv
 from io import StringIO
 import re 
-from langchain.text_splitter import CharacterTextSplitter
+import pickle
 
 
 load_dotenv('.env')
@@ -17,6 +17,7 @@ app = Flask(__name__)
 
 repo_id = 'asaurasieu/debatebot'
 repo_url = 'https://huggingface.co/asaurasieu/debatebot'
+hf_read_token = os.getenv('HF_READ_TOKEN')
 
 def list_hf_repository_files(repo_url):
     """List all files in a specified Hugging Face repository's URL."""
@@ -51,21 +52,59 @@ def get_document_content(document_name):
     return content
       
 
-def load_and_process_document(content, chunk_size=5000, chunk_overlap=10):
+def load_and_process_document(content, document_name):
     """
-    Splits the 'Full_Document' content into manageable chunks for vector embedding.
-
-    Args:
-    full_document (str): The string content of the 'Full_Document'.
-    chunk_size (int): The size of each chunk in characters.
-    chunk_overlap (int): The number of characters that overlap between consecutive chunks.
-
-    Returns:
-    list of str: The list of text chunks after splitting.
+    Process document content (either a single string or a list of strings) into a structured dictionary.
+    Each paragraph is indexed by its order.
     """
-    text_splitter = CharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
-    text_chunks = text_splitter.split_text(content)
-    return text_chunks
+    # If content is a single string (from a .txt file), split into paragraphs
+    if isinstance(content, str):
+        paragraphs = content.split('\n\n')
+    elif isinstance(content, list):
+        # Assume each item in the list is a separate paragraph/document
+        paragraphs = content
+    else:
+        raise ValueError("Unsupported content type. Content must be a string or a list of strings.")
+
+    # Filter out any empty paragraphs
+    paragraphs = [p for p in paragraphs if p.strip()]
+
+    # Logging for verification
+    print(f'Total paragraphs or documents: {len(paragraphs)}')
+    for i, paragraph in enumerate(paragraphs[:5]):  # Example: log first 5 paragraphs/documents
+        preview = paragraph[:30] + "..." if len(paragraph) > 30 else paragraph
+        print(f'Preview of paragraph/document {i+1}: "{preview}"')
+    
+    # Create a dictionary where each paragraph/document is indexed
+    paragraph_dict = {i: paragraph for i, paragraph in enumerate(paragraphs)}
+    
+    # Save processed content to a binary file in the local 'data' directory
+    data_dir = os.path.join(os.getcwd(), './data')
+    os.makedirs(data_dir, exist_ok=True)
+    file_path = os.path.join(data_dir, f'{document_name}.pkl')
+    
+    with open(file_path, 'wb') as file:
+        pickle.dump(paragraph_dict, file)
+    
+    return paragraph_dict
+
+# Function to load processed document content from a binary file
+def load_paragraph_dict_from_file(document_name, data_dir='./data'):
+    # Construct the full path to the binary file
+    file_path = os.path.join(data_dir, f'{document_name}.pkl')
+
+    # Check if the file exists
+    if os.path.isfile(file_path):
+        # Load and return the paragraph dictionary from the file
+        with open(file_path, 'rb') as file:
+            paragraph_dict = pickle.load(file)
+        return paragraph_dict
+
+    # If the file does not exist, return None
+    return None
+
+    
+
 
 
 

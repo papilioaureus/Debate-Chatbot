@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../.
 
 import pytest 
 from unittest.mock import patch, MagicMock
-from database_endpoint import list_hf_repository_files, list_available_documents, load_and_process_document
+from backend.database_endpoint import list_hf_repository_files, list_available_documents, load_and_process_document
 
 
 @pytest.fixture

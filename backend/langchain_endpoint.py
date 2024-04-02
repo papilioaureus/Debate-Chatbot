@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 import openai
 import os
-from database_endpoint import get_document_content, load_and_process_document
+from backend.database_endpoint import get_document_content, load_and_process_document
 from dotenv import load_dotenv
 from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import Chroma

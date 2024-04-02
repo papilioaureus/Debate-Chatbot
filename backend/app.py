@@ -11,13 +11,6 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
-def load_and_index_documents():
-    # Your document loading and indexing code here...
-    print("Documents have been loaded and indexed.")
-
-# Run the function once at the start of your application
-load_and_index_documents()
-
 @app.route('/', methods=['GET'])
 def home():
     return jsonify({'message': 'Welcome to the Langchain API!'})

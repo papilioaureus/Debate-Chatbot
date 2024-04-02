@@ -1,6 +1,6 @@
 from collections import defaultdict
 import nltk
-import os
+import os 
 from flask import jsonify
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
@@ -46,6 +46,7 @@ def index_document_chunks(document_name, chunk_keywords_index):
     for entry in chunk_keywords_index:
         index, chunk, keywords = entry['index'], entry['chunk'], entry['keywords']
         for keyword in keywords:
+            print("Keywords_to_chunks_index: ", keywords_to_chunks_index)
             # Append document name and paragraph index to the keyword entry
             keywords_to_chunks_index[keyword].append((document_name, index))
 
@@ -57,28 +58,26 @@ def process_and_store_document_content(document_name):
     
     
 def load_and_index_documents():
-    """Function to load and index documents from the repository, only if they're not already indexed."""
+    """Load index from file if it exists, otherwise create it."""
     document_names = list_available_documents()
     for document_name in document_names:
-        # Construct the file path for the indexed document
-        file_path = os.path.join(data_dir, f'{document_name}.pkl')
-
-        # Check if the file already exists
-        if os.path.isfile(file_path):
-            print(f"Index file for {document_name} already exists. Skipping indexing.")
-            continue
-
-        print(f"Indexing document: {document_name}")
-        raw_content = get_document_content(document_name)
-        paragraph_dict = load_and_process_document(raw_content, document_name)
-        chunk_keywords_index = process_document_chunks(paragraph_dict)
-        index_document_chunks(document_name, chunk_keywords_index)
+        # Check if the document has already been processed and indexed
+        if not load_paragraph_dict_from_file(document_name):
+            print(f"Indexing document: {document_name}")
+            raw_content = get_document_content(document_name)
+            paragraph_dict = load_and_process_document(raw_content, document_name)
+            chunk_keywords_index = process_document_chunks(paragraph_dict)
+            index_document_chunks(document_name, chunk_keywords_index)
+        else:
+            print(f"Document {document_name} has already been indexed.")
+ 
         
 def search_for_query(query):
     query_keywords = extract_keywords_from_text(query)
     print(f"Query Keywords: {query_keywords}")
     matched_chunks = defaultdict(list)
 
+    print(f"Keywords to Chunks Index: {keywords_to_chunks_index}")
     for keyword in query_keywords:
         if keyword in keywords_to_chunks_index:
             for document_name, chunk_index in keywords_to_chunks_index[keyword]:

@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 from huggingface_hub import HfApi, hf_hub_download, HfFolder
 import csv
 from io import StringIO
+import sys 
 import re 
 import pickle
 
@@ -37,6 +38,7 @@ def list_available_documents():
     return docs
 
 def get_document_content(document_name):
+    csv.field_size_limit(sys.maxsize)
     file_path = hf_hub_download(repo_id=repo_id, filename=document_name, use_auth_token=False)
     content = []
 

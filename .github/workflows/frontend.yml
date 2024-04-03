@@ -32,7 +32,7 @@ jobs:
           npm run build
 
       - name: Zip artifact for deployment
-        run: zip -r release.zip frontend
+        run: zip release.zip ./* -r
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v3
@@ -54,10 +54,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: debate-chatbot-build
-
-      - name: Unzip artifact for deployment
-        run: unzip release.zip
-
+        
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp

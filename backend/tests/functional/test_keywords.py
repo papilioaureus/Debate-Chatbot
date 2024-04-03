@@ -148,42 +148,61 @@ def reset_global_index():
     global keywords_to_chunks_index
     keywords_to_chunks_index.clear()
 
+def mock_extract_keywords_from_text(query):
+    return query.split()
+
 @pytest.fixture(autouse=True)
 def run_before_and_after_tests():
-    reset_global_index()
+    # Function to reset the global index
+    # Reset the index here
     yield
 
-
-def test_search_for_query():
-    # Assume the real index uses integers for chunk indices
+def test_search_for_best_match():
+    # Setup the global index for the test
+    global keywords_to_chunks_index
     keywords_to_chunks_index.update({
-        'test': [('doc1', 1), ('doc2', 2)],
-        'example': [('doc2', 2)],
+        'test': [('doc1', '1'), ('doc2', '2')],
+        'example': [('doc2', '2')],
     })
 
     mock_paragraphs = {
-    'doc1': {
-        1: {'chunk': "This is a test chunk in doc1.", 'keywords': []}
-    },
-    'doc2': {
-        2: {'chunk': "This chunk contains test and example keywords.", 'keywords': ['test', 'example']}
-    }
-}
-
-    # The expected result should also use integers for chunk indices
-    expected_result = {
         'doc1': {
-            1: {'chunk': "This is a test chunk in doc1.", 'keywords': []}
+            '1': {'chunk': "This is a test chunk in doc1.", 'keywords': ['test']}
         },
         'doc2': {
-            2: {'chunk': "This chunk contains test and example keywords.", 'keywords': ['test', 'example']}
+            '2': {'chunk': "This chunk contains test and example keywords.", 'keywords': ['test', 'example']}
         }
     }
 
-    with patch('keywords.load_paragraph_dict_from_file', side_effect=lambda doc_name: mock_paragraphs.get(doc_name)) as mock_load_paragraph:
+    expected_best_match = {
+        'document_name': 'doc2',
+        'chunk_index': '2',
+        'chunk': "This chunk contains test and example keywords.",
+        'keywords': ['test', 'example'],
+        'score': 2
+    }
+
+    with patch('keywords.load_paragraph_dict_from_file', side_effect=lambda doc_name: mock_paragraphs.get(doc_name)), \
+         patch('keywords.extract_keywords_from_text', side_effect=mock_extract_keywords_from_text):
+        
         result = search_for_query("test example")
+        assert result == expected_best_match, "The search result does not match the expected best match."
 
-        assert result == expected_result, "The search result does not match the expected output."
+def test_no_match_found():
+    # Setup the global index for the test
+    global keywords_to_chunks_index
+    keywords_to_chunks_index.update({
+        'test': [('doc1', '1')],
+    })
 
-        unique_pairs = {('doc1', '1'), ('doc2', '2')} 
-        assert mock_load_paragraph.call_count == len(unique_pairs), "load_paragraph_dict_from_file was not called as expected."
+    mock_paragraphs = {
+        'doc1': {
+            '1': {'chunk': "This is a test chunk in doc1.", 'keywords': ['test']}
+        }
+    }
+
+    with patch('keywords.load_paragraph_dict_from_file', side_effect=lambda doc_name: mock_paragraphs.get(doc_name)), \
+         patch('keywords.extract_keywords_from_text', side_effect=mock_extract_keywords_from_text):
+        
+        result = search_for_query("unmatched keyword")
+        assert result == {}, "Expected no match but got a result."

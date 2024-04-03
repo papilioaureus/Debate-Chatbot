@@ -64,23 +64,33 @@ def test_list_available_documents(mock_api):
     
 # Test for processing single string content
 def test_load_and_process_document_with_string():
-    content = "Paragraph1\n\nParagraph2"  # Including an empty paragraph for filtering test
+    content = "Paragraph1\n\nParagraph2"  
     document_name = 'test_document.txt'
+    
+    expected_result = {
+        0: {'chunk': 'Paragraph1', 'keywords': ['Paragraph1']},
+        1: {'chunk': 'Paragraph2', 'keywords': ['Paragraph2']}
+    }
 
-    with patch("builtins.open", mock_open()) as mocked_file:
-        with patch("os.makedirs") as mocked_makedirs:
-            result = load_and_process_document(content, document_name)
+    # Mock for extract_keywords_from_text to return the paragraph as the keyword
+    def mock_extract_keywords_from_text(paragraph):
+        return [paragraph]
 
-            # Verifying directory creation
-            mocked_makedirs.assert_called_once_with(os.path.join(os.getcwd(), './data'), exist_ok=True)
+    with patch("builtins.open", mock_open()) as mocked_file, \
+         patch("os.makedirs") as mocked_makedirs, \
+         patch("database_endpoint.extract_keywords_from_text", side_effect=mock_extract_keywords_from_text):
+        
+        result = load_and_process_document(content, document_name)
 
-            # Verifying file operations
-            mocked_file.assert_called_once_with(os.path.join(os.getcwd(), './data', f'{document_name}.pkl'), 'wb')
+        # Verifying directory creation
+        mocked_makedirs.assert_called_once_with(os.path.join(os.getcwd(), 'data'), exist_ok=True)
 
-            # Check the result dictionary
-            assert len(result) == 2, "Incorrect number of paragraphs processed"
-            assert result[0] == "Paragraph1", "First paragraph mismatch"
-            assert result[1] == "Paragraph2", "Second paragraph mismatch"
+        # Verifying file operations
+        mocked_file.assert_called_once_with(os.path.join(os.getcwd(), 'data', f'{document_name}.pkl'), 'wb')
+
+        # Check the result dictionary
+        assert result == expected_result, "The processed paragraphs do not match the expected output"
+
 
 # Test when the file exists
 def test_load_paragraph_dict_from_file_exists():

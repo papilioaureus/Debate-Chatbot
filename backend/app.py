@@ -1,7 +1,6 @@
 from flask import Flask, jsonify, request
 from database_endpoint import list_available_documents, get_document_content,load_and_process_document, load_paragraph_dict_from_file
 from keywords import search_for_query, populate_keywords_to_chunks_index
-from request import url 
 import openai
 import logging
 import os
@@ -70,7 +69,7 @@ def ask_question():
         keywords = matched_content['keywords']
         context = f"\n{chunk}\nKeywords: {', '.join(keywords)}"
     else:
-        # Handle case where no content is matched
+      
         context = "No content matched the query."
    
     logging.info("Context for OpenAI API generated successfully")
@@ -95,31 +94,31 @@ def ask_question():
     return jsonify({'answer': generated_response})
 
 
-# @app.route('/search')
-# def search():
-#     query = request.args.get('query', '')
-#     if not query:
-#         logging.warning("Search query was empty")
-#         return jsonify({'error': 'Query is required.'}), 400
+@app.route('/search')
+def search():
+    query = request.args.get('query', '')
+    if not query:
+        logging.warning("Search query was empty")
+        return jsonify({'error': 'Query is required.'}), 400
 
-#     matched_content = search_for_query(query)
+    matched_content = search_for_query(query)
     
-#     # Check if a match was found
-#     if matched_content:
-#         logging.info(f"Matched content found for the query: {query}")
-#         # Create a response structure based on the matched content
-#         enriched_response = {
-#             'document_name': matched_content['document_name'],
-#             'index': matched_content['chunk_index'],
-#             'chunk': matched_content['chunk'],
-#             'keywords': matched_content['keywords'],
-#             'score': matched_content.get('score', 0)  
-#         }
-#     else:
-#         logging.info("No matched content found for the query.")
-#         enriched_response = {}
+   
+    if matched_content:
+        logging.info(f"Matched content found for the query: {query}")
+        # Create a response structure based on the matched content
+        enriched_response = {
+            'document_name': matched_content['document_name'],
+            'index': matched_content['chunk_index'],
+            'chunk': matched_content['chunk'],
+            'keywords': matched_content['keywords'],
+            'score': matched_content.get('score', 0)  
+        }
+    else:
+        logging.info("No matched content found for the query.")
+        enriched_response = {}
 
-#     return jsonify({'match': enriched_response})
+    return jsonify({'match': enriched_response})
 
    
 if __name__ == '__main__':

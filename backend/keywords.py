@@ -20,10 +20,9 @@ def index_text_chunks(text_chunks):
 def process_document_chunks(paragraph_dict):
     chunk_keywords_index = []
 
-    # Assuming paragraph_dict structure is: {index: {'chunk': text, 'keywords': [keywords]}}
+    # {index: {'chunk': text, 'keywords': [keywords]}}
     for index, data in paragraph_dict.items():
         chunk = data['chunk']  # Now extracting 'chunk' from the dictionary
-        # No need to extract keywords again since it's already provided
         chunk_keywords_index.append({
             'index': index,
             'chunk': chunk,

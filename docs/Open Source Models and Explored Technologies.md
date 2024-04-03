@@ -26,7 +26,7 @@ the model's state, debating between local storage and cloud-based platforms like
 model-frontend communication through a Flask server in a Colab environment were unsuccessful, highlighting the technical complexities 
 in deploying large AI models and the necessity for efficient model management solutions.
 
-## Dataset Selection 
+## Dataset selection 
 
 After investigation, the data which was best suited for our model was the [DebateSum Database](https://huggingface.co/datasets/Hellisotherpeople/DebateSum)
 . DebateSum is an open source database which contains over 100,000 archives of debates which were extracted over a seven year period. Due to computational power limitations and issues with using Azure ML Studio and cloud computing resources, we found ourselves forced to narrow the scope of the documents fed into the model. However, in a future iteration, our goal is to scale our computational power into the cloud and leverage cloud computing to process more documents and allow the chatbot to gain more 'intelligence'. 

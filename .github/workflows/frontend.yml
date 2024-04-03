@@ -1,4 +1,5 @@
-name: debate-chatbot-ci-cd 
+
+name: debate-chatbot-ci-cd
 
 on:
     push:
@@ -8,7 +9,7 @@ on:
     workflow_dispatch:
 
 env:
-  AZURE_WEBAPP_NAME: Debatebot 
+  AZURE_WEBAPP_NAME: Debatebot
   AZURE_WEBAPP_PACKAGE_PATH: '.' # set this to the path to your web app project, defaults to the repository root
 
 jobs:
@@ -28,13 +29,13 @@ jobs:
       - name: npm install, build, and test
         run: |
           npm install
-          npm run build 
+          npm run build
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v3
         with:
-          name: debate-chatbot
-          path: dist 
+          name: debate-chatbot-build
+          path: build
 
   deploy:
     runs-on: ubuntu-latest

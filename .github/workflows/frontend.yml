@@ -26,10 +26,10 @@ jobs:
       - name: npm install, build, and test
         run: |
           npm install
-          npm run build # This should build your front-end application
+          npm run build
         
       - name: Zip artifact for deployment
-        run: zip -r release.zip build
+        run: zip -r release.zip .
       
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v3

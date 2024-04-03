@@ -1,14 +1,13 @@
-
 name: chatbot-ci-cd
 
 on:
-    push:
-      branches: [ "frontalex" ]
-    workflow_dispatch:
+  push:
+    branches: [ "frontalex" ]
+  workflow_dispatch:
 
 env:
   AZURE_WEBAPP_NAME: Debatebot
-  AZURE_WEBAPP_PACKAGE_PATH: '.' # set this to the path to your web app project, defaults to the repository root
+  AZURE_WEBAPP_PACKAGE_PATH: '.' # The path to your web app project is the repository root in this case.
 
 jobs:
   build:
@@ -29,11 +28,14 @@ jobs:
           npm install
           npm run build
 
+      - name: Zip artifact for deployment
+        run: zip -r release.zip build # Adjust this line if your output directory is different.
+
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v3
         with:
           name: debate-chatbot-build
-          path: .
+          path: release.zip
 
   deploy:
     runs-on: ubuntu-latest
@@ -47,12 +49,12 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: debate-chatbot-build
-        
+
       - name: 'Deploy to Azure Web App'
-        uses: azure/webapps-deploy@v2
+        uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
         with:
           app-name: 'Debatebot'
           slot-name: 'Production'
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: .
+          package: release.zip

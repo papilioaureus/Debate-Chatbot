@@ -1,46 +1,57 @@
 import React, { useState } from 'react';
-import flowdiagram from './conversation_flow.png';
+import './ChatPage.css';
+import userLogo from './guy.jpg'; // Import user logo image
+import botLogo from './bot.jpg'; // Import bot logo image
 
-const ChatPage = () => {
-    const [messages, setMessages] = useState([]);
-    const [currentMessage, setCurrentMessage] = useState('');
 
-    const handleSendMessage = (e) => {
-        e.preventDefault(); // Prevent the form from refreshing the page
-        if (!currentMessage.trim()) return; // Ignore empty messages
-        setMessages([...messages, currentMessage]);
-        setCurrentMessage(''); // Clear the input field after sending
-    };
 
-    return (
-        <div style={{ display: 'flex', height: '100vh' }}>
-            {/* Chat section */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
-                <h2>Chat with Us</h2>
-                <div>
-                    {messages.map((msg, index) => (
-                        <p key={index}>{msg}</p>
-                    ))}
-                </div>
-                <form onSubmit={handleSendMessage}>
-                    <input
-                        type="text"
-                        value={currentMessage}
-                        onChange={(e) => setCurrentMessage(e.target.value)}
-                        placeholder="Type your message here..."
-                        style={{ width: '70%', marginRight: '10px' }}
-                    />
-                    <button type="submit">Send</button>
-                </form>
-            </div>
 
-            {/* Space reserved for conversation diagram or additional content */}
-            <div style={{ flex: 1, backgroundColor: '#f0f0f0', padding: '20px' }}>
-                <h2>Conversation Diagram</h2>
-                <img src={flowdiagram} alt="Conversation Diagram" style={{ maxWidth: '100%', maxHeight: '100%', height: 'auto' }} />
-            </div>
-        </div>
-    );
+const Chatbot = () => {
+  const [messages, setMessages] = useState([]);
+  const [inputText, setInputText] = useState('');
+
+  const sendMessage = () => {
+    const newMessage = { text: inputText, isUser: true };
+    setMessages([...messages, newMessage]);
+    setInputText('');
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      sendMessage();
+    }
+  };
+
+  return (
+    <div className="chatbot-container">
+      <div className="messages-container">
+        {messages.map((message, index) => (
+          <div
+            key={index}
+            className={`message ${message.isUser ? 'user' : 'bot'}`}
+          >
+            <img
+              src={message.isUser ? userLogo : botLogo}
+              alt={message.isUser ? 'User' : 'Bot'}
+              className="avatar"
+            />
+            <div className="message-text">{message.text}</div>
+          </div>
+        ))}
+      </div>
+      <div className="input-container">
+        <input
+          type="text"
+          value={inputText}
+          onChange={(e) => setInputText(e.target.value)}
+          onKeyPress={handleKeyPress}
+          placeholder="Type your message..."
+        />
+        <button onClick={sendMessage}>Send</button>
+      </div>
+    </div>
+  );
 };
 
-export default ChatPage;
+export default Chatbot;
+

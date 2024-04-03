@@ -7,11 +7,10 @@ const HomePage = ({ navigateTo }) => {
         <div className="homepage-container">
             <div className="links">
                 <button onClick={() => navigateTo('about')}>About Us</button> |
-                <button onClick={() => navigateTo('forum')}>Forum</button> |
-                <button onClick={() => navigateTo('help')}>Help</button> |
-                <button onClick={() => navigateTo('contact')}>Contact Us</button>
+                <button onClick={() => navigateTo('help')}>Help</button> 
             </div>
-            <h1 className="title">WELCOME TO</h1>
+            <h1 className="title">WELCOME TO THE</h1>
+            <h2 className="h2">DEBATE CHATBOT</h2>
             <button className="start-chat-button" onClick={() => navigateTo('chat')}>
                 Start ChatBot
             </button>

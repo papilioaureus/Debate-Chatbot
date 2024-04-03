@@ -1,8 +1,10 @@
 import os
 import requests
+import nltk
 import json
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv
+import logging
 from bs4 import BeautifulSoup
 from huggingface_hub import HfApi, hf_hub_download, HfFolder
 import csv
@@ -10,6 +12,21 @@ from io import StringIO
 import sys 
 import re 
 import pickle
+from nltk.tokenize import word_tokenize, sent_tokenize
+from nltk.tag import pos_tag
+from nltk.corpus import stopwords
+from nltk.util import ngrams
+from nltk import pos_tag, ne_chunk
+from datetime import datetime
+
+
+
+nltk.download('averaged_perceptron_tagger')
+
+nltk.download('punkt')
+nltk.download('stopwords')
+nltk.download('maxent_ne_chunker')
+nltk.download('words')
 
 
 load_dotenv('.env')
@@ -52,36 +69,74 @@ def get_document_content(document_name):
             content = f.read()
     os.remove(file_path)
     return content
-      
+
+def extract_keywords_from_text(text):
+    start_time = datetime.now()
+    stop_words = set(stopwords.words('english'))
+
+    # Tokenize the text into sentences
+    sentences = sent_tokenize(text)
+    
+    # Initialize a set to store unique keywords
+    keywords = set()
+    
+    for sentence in sentences:
+        words = word_tokenize(sentence)
+        pos_tags = pos_tag(words)
+        
+        for chunk in ne_chunk(pos_tags, binary=False):
+            if hasattr(chunk, 'label'):
+                keywords.add(" ".join(c[0] for c in chunk))
+            else:
+                word, tag = chunk
+                if tag in ['NNP', 'NNPS'] and word.lower() not in stop_words:
+                    keywords.add(word)
+        
+        filtered_words = [word for word in words if word[0].isupper()]
+        
+        # Extracting N-Grams (bigrams and trigrams as example)
+        for n in range(2, 4):
+            n_grams = ngrams(filtered_words, n)
+            for grams in n_grams:
+                joined_grams = " ".join(grams)
+                # Check if the joined grams start with an uppercase letter (simple heuristic)
+                if joined_grams[0].isupper():
+                    keywords.add(joined_grams)
+        
+        # Adding individual proper nouns and specific nouns
+        proper_nouns_and_nouns = [word for word, tag in pos_tags if tag in ['NNP', 'NNPS', 'NN', 'CD']]
+        keywords.update(proper_nouns_and_nouns)
+        
+    # Optionally, filter out stopwords from the keywords
+    filtered_keywords = [kw for kw in keywords if kw.lower() not in stop_words]
+    
+    end_time = datetime.now()
+    logging.info("Total processing time: {}".format(end_time - start_time))
+    return list(filtered_keywords)
+    
 
 def load_and_process_document(content, document_name):
     """
-    Process document content (either a single string or a list of strings) into a structured dictionary.
-    Each paragraph is indexed by its order.
+    Process document content into a structured dictionary with indexed paragraphs.
+    Each entry in the dictionary includes the paragraph text and extracted keywords.
     """
-    # If content is a single string (from a .txt file), split into paragraphs
     if isinstance(content, str):
         paragraphs = content.split('\n\n')
     elif isinstance(content, list):
-        # Assume each item in the list is a separate paragraph/document
         paragraphs = content
     else:
         raise ValueError("Unsupported content type. Content must be a string or a list of strings.")
 
-    # Filter out any empty paragraphs
     paragraphs = [p for p in paragraphs if p.strip()]
 
-    # Logging for verification
-    print(f'Total paragraphs or documents: {len(paragraphs)}')
-    for i, paragraph in enumerate(paragraphs[:5]):  # Example: log first 5 paragraphs/documents
-        preview = paragraph[:30] + "..." if len(paragraph) > 30 else paragraph
-        print(f'Preview of paragraph/document {i+1}: "{preview}"')
-    
-    # Create a dictionary where each paragraph/document is indexed
-    paragraph_dict = {i: paragraph for i, paragraph in enumerate(paragraphs)}
-    
-    # Save processed content to a binary file in the local 'data' directory
-    data_dir = os.path.join(os.getcwd(), './data')
+    # Create a dictionary to store processed paragraphs and their keywords
+    paragraph_dict = {}
+    for i, paragraph in enumerate(paragraphs):
+        keywords = extract_keywords_from_text(paragraph)
+        paragraph_dict[i] = {'chunk': paragraph, 'keywords': keywords}
+
+    # Save processed content as before
+    data_dir = os.path.join(os.getcwd(), 'data')
     os.makedirs(data_dir, exist_ok=True)
     file_path = os.path.join(data_dir, f'{document_name}.pkl')
     

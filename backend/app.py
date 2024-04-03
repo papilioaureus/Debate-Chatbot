@@ -1,9 +1,11 @@
 from flask import Flask, jsonify, request
 from database_endpoint import list_available_documents, get_document_content,load_and_process_document, load_paragraph_dict_from_file
-from keywords import search_for_query, load_and_index_documents
+from keywords import search_for_query, populate_keywords_to_chunks_index
 from request import url 
 import openai
 import logging
+import os
+from dotenv import load_dotenv
 import json
 from flask_cors import CORS
 
@@ -13,13 +15,13 @@ CORS(app)
 
 @app.route('/', methods=['GET'])
 def home():
-    return jsonify({'message': 'Welcome to the Langchain API!'})
+    return jsonify({'message': 'Welcome to the API!'})
 
 @app.route('/documents', methods=['GET'])
 def list_documents():
     """Endpoint to list available documents."""
     docs = list_available_documents()
-    return jsonify(docs)
+    return jsonify({'documents': docs})
 
 @app.route('/documents/<string:document_name>', methods=['GET'])
 def get_document(document_name):
@@ -35,7 +37,7 @@ def get_document(document_name):
             processed_content = load_and_process_document(content, document_name)
         return jsonify(processed_content)
     else:
-        return jsonify({'error': 'Document not found.'}),
+        return jsonify({'error': 'Document not found.'}), 404
 
 
 @app.route('/', defaults={'path': ''}, methods=['GET'])
@@ -51,54 +53,76 @@ logging.basicConfig(level=logging.INFO)
     
 @app.route('/ask', methods=['POST'])
 def ask_question():
-    user_input = request.json.get('user_input')
+    user_input = request.json.get('user_input', '')
+    if not user_input:
+        logging.error("No user input received")
+        return jsonify({'error': 'User input is required.'}), 400
+    
+    logging.info("Received user input for query: %s", user_input)
+    
     matched_content = search_for_query(user_input)
-    print("matched_content: ", matched_content)
-    relevant_content = []
-
-    for document_name, chunk_indices in matched_content.items():
-        for index in chunk_indices:
-            paragraph_dict = load_paragraph_dict_from_file(document_name)
-            print("paragraph_dict: ", paragraph_dict)
-            if paragraph_dict:
-                relevant_content.append(paragraph_dict.get(index, ''))
-
-    combined_content = " ".join(relevant_content)
-    messages = [
-        {"role": "system", "content": "You are a knowledgeable assistant."},
+    print("Matched content found for the query: ", matched_content)
+    
+    # Check if matched_content is not empty
+    if matched_content:
+        # Directly access 'chunk' and 'keywords' from matched_content
+        chunk = matched_content['chunk']
+        keywords = matched_content['keywords']
+        context = f"\n{chunk}\nKeywords: {', '.join(keywords)}"
+    else:
+        # Handle case where no content is matched
+        context = "No content matched the query."
+   
+    logging.info("Context for OpenAI API generated successfully")
+    load_dotenv()  
+    openai.api_key = os.getenv('OPENAI_API_KEY') 
+      
+    conversation = [
+        {"role": "system", "content": "You are a knowledgeable assistant that provides information based on specific document content and keywords."},
         {"role": "user", "content": user_input},
-        {"role": "assistant", "content": f"Based on the document content: {combined_content}"}
+        {"role": "assistant", "content": context}
     ]
-
-    # Assuming you have already configured the OpenAI API
+    
     response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",  # Adjust model version if necessary
-        messages=messages,
-        temperature=0.7
-    )
-
-    last_message = response.choices[-1]['message']['content']
-    return jsonify({'answer': last_message.strip()})
-
+    model="gpt-3.5-turbo",
+    messages=conversation,
+    temperature=0.7,
+    max_tokens=4000
+)
     
-    
+    generated_response = response.choices[0].message['content'].strip()
+    logging.info("Response from OpenAI API received")
+    return jsonify({'answer': generated_response})
+
+
 # @app.route('/search')
 # def search():
 #     query = request.args.get('query', '')
+#     if not query:
+#         logging.warning("Search query was empty")
+#         return jsonify({'error': 'Query is required.'}), 400
+
 #     matched_content = search_for_query(query)
     
-#     # Enhance the response structure to include document names and paragraph indices
-#     enriched_response = []
-#     for document_name, paragraphs in matched_content.items():
-#         for index, text in paragraphs.items():
-#             enriched_response.append({
-#                 'document': document_name,
-#                 'paragraph_index': index,
-#                 'text': text
-#             })
+#     # Check if a match was found
+#     if matched_content:
+#         logging.info(f"Matched content found for the query: {query}")
+#         # Create a response structure based on the matched content
+#         enriched_response = {
+#             'document_name': matched_content['document_name'],
+#             'index': matched_content['chunk_index'],
+#             'chunk': matched_content['chunk'],
+#             'keywords': matched_content['keywords'],
+#             'score': matched_content.get('score', 0)  
+#         }
+#     else:
+#         logging.info("No matched content found for the query.")
+#         enriched_response = {}
 
-#     return jsonify({'matches': enriched_response})
+#     return jsonify({'match': enriched_response})
 
    
 if __name__ == '__main__':
+    populate_keywords_to_chunks_index() 
+    logging.basicConfig(level=logging.INFO)
     app.run(debug=True, port=5000)

@@ -2,11 +2,11 @@ name: frontend-ci-cd
 
 on:
   push:
-    branches: [ "main" ] # Change this to match the branch you use for production deployment
+    branches: [ "frontalex" ]
   workflow_dispatch:
 
 env:
-  AZURE_WEBAPP_NAME: FrontendApp # Replace with your Azure WebApp name
+  AZURE_WEBAPP_NAME: Debatebot
   AZURE_WEBAPP_PACKAGE_PATH: '.' # Assuming your project root contains the front end app
 
 jobs:
@@ -29,7 +29,7 @@ jobs:
           npm run build # This should build your front-end application
         
       - name: Zip artifact for deployment
-        run: zip -r release.zip build # Make sure 'build' is the output directory of your front end build process
+        run: zip -r release.zip build
       
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v3

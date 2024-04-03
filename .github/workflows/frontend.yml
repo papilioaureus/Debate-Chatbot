@@ -1,11 +1,9 @@
 
-name: debate-chatbot-ci-cd
+name: chatbot-ci-cd
 
 on:
     push:
-      branches: [ "CL-frontend" ]
-    pull_request:
-      branches: [ "CL-frontend" ]
+      branches: [ "frontalex" ]
     workflow_dispatch:
 
 env:
@@ -31,16 +29,11 @@ jobs:
           npm install
           npm run build
 
-      - name: Zip artifact for deployment
-        run: zip release.zip ./* -r
-
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v3
         with:
           name: debate-chatbot-build
-          path: |
-            release.zip
-            !venv/
+          path: .
 
   deploy:
     runs-on: ubuntu-latest
@@ -51,15 +44,15 @@ jobs:
 
     steps:
       - name: Download artifact from build job
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: debate-chatbot-build
         
       - name: 'Deploy to Azure Web App'
-        uses: azure/webapps-deploy@v3
+        uses: azure/webapps-deploy@v2
         id: deploy-to-webapp
         with:
           app-name: 'Debatebot'
           slot-name: 'Production'
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: release.zip
+          package: .

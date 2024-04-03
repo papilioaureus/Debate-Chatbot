@@ -1,4 +1,4 @@
-# Sophisticated Debate Simulator
+# Debatebot
 
 ## Overview
 

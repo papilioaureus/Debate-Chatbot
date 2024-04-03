@@ -1,13 +1,13 @@
-name: chatbot-ci-cd
+name: frontend-ci-cd
 
 on:
   push:
-    branches: [ "frontalex" ]
+    branches: [ "main" ] # Change this to match the branch you use for production deployment
   workflow_dispatch:
 
 env:
-  AZURE_WEBAPP_NAME: Debatebot
-  AZURE_WEBAPP_PACKAGE_PATH: '.' # The path to your web app project is the repository root in this case.
+  AZURE_WEBAPP_NAME: FrontendApp # Replace with your Azure WebApp name
+  AZURE_WEBAPP_PACKAGE_PATH: '.' # Assuming your project root contains the front end app
 
 jobs:
   build:
@@ -15,26 +15,26 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-
+      
       - name: Set up Node.js version
         uses: actions/setup-node@v3
         with:
           node-version: '18.x'
           cache: 'npm'
           cache-dependency-path: 'package-lock.json'
-
+      
       - name: npm install, build, and test
         run: |
           npm install
-          npm run build
-
+          npm run build # This should build your front-end application
+        
       - name: Zip artifact for deployment
-        run: zip -r release.zip build # Adjust this line if your output directory is different.
-
+        run: zip -r release.zip build # Make sure 'build' is the output directory of your front end build process
+      
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v3
         with:
-          name: debate-chatbot-build
+          name: frontend-build
           path: release.zip
 
   deploy:
@@ -48,13 +48,13 @@ jobs:
       - name: Download artifact from build job
         uses: actions/download-artifact@v3
         with:
-          name: debate-chatbot-build
-
+          name: frontend-build
+      
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
         with:
-          app-name: 'Debatebot'
+          app-name: ${{ env.AZURE_WEBAPP_NAME }} # Use environment variable for the app name
           slot-name: 'Production'
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: release.zip

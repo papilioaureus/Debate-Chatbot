@@ -27,7 +27,9 @@ We explored four open source models as candidates for the debate chatbot agent: 
 Unit and functional testing was implemented for the backend functions, and these tests were executed using PyTest. 
 ## Getting Started
 
-To get started with this innovative debate simulator, download the repository and run `app.py` in your local environment after running `npm start`. In case you want to try it out online, visit our [azure webapp](debatebot.azurewebsites.net). 
+## How to run
+
+To get started with this innovative debate simulator, download the repository and run `app.py` for the backend in your local environment after running `npm start` to initialize the frontend. In case you want to try it out online, visit our [azure webapp](debatebot.azurewebsites.net). 
 
 
 

@@ -63,7 +63,6 @@ def get_document_content(document_name):
         if document_name.endswith('.csv'):
             reader = csv.DictReader(f)
             for row in reader:
-                # Directly take the text from 'Full_Document', no JSON parsing needed
                 content.append(row.get('Full-Document', ''))
         elif document_name.endswith('.txt'):
             content = f.read()

@@ -71,35 +71,40 @@ def load_and_index_documents():
 def search_for_query(query):
     query_keywords = extract_keywords_from_text(query)
     logging.info(f"Extracted query keywords: {query_keywords}")
-    
-    best_match = None  # To keep track of the best match across all documents
-    highest_score = -1  # Initial score to ensure any real match will replace this
-    
+    query_keywords_set = set(query_keywords)  # Convert list to set for efficient comparison
+
+    potential_matches = {}  # To keep track of potential matches before scoring
+
+    # Aggregate potential matches based on any matching keyword in the index
     for keyword in query_keywords:
         if keyword in keywords_to_chunks_index:
-            logging.info(f"Keyword found in index: {keyword}")
             for document_name, chunk_index in keywords_to_chunks_index[keyword]:
-                paragraph_dict = load_paragraph_dict_from_file(document_name)
-                if not paragraph_dict:
-                    logging.error(f"Could not load paragraph_dict for document: {document_name}")
-                    continue
-                
-                chunk_data = paragraph_dict.get(chunk_index, None)
-                if chunk_data:
-                    # Count how many query keywords are in this paragraph's keywords
-                    score = sum(kw in chunk_data['keywords'] for kw in query_keywords)
-                    # Update best match if this paragraph has a higher score
-                    if score > highest_score:
-                        best_match = {
-                            'document_name': document_name,
-                            'chunk_index': chunk_index,
-                            'chunk': chunk_data['chunk'],
-                            'keywords': chunk_data['keywords'],
-                            'score': score  # Including score might be useful for debugging
-                        }
-                        highest_score = score
-                else:
-                    logging.warning(f"Chunk index {chunk_index} not found in document: {document_name}")
-    
-    # Return the best match if found, otherwise return an empty dict to indicate no match
+                if (document_name, chunk_index) not in potential_matches:
+                    potential_matches[(document_name, chunk_index)] = 0
+
+    best_match = None  # To keep track of the best match across all documents
+    highest_score = -1  # Initial score to ensure any real match will replace this
+
+    # Evaluate each potential match based on the query context
+    for (document_name, chunk_index), _ in potential_matches.items():
+        paragraph_dict = load_paragraph_dict_from_file(document_name)
+        if not paragraph_dict:
+            logging.error(f"Could not load paragraph dict for document: {document_name}")
+            continue
+        
+        chunk_data = paragraph_dict.get(str(chunk_index), None)  # Ensure string index is used
+        if chunk_data:
+            paragraph_keywords_set = set(chunk_data['keywords'])
+            intersection = query_keywords_set.intersection(paragraph_keywords_set)
+            score = len(intersection)
+
+            if score > highest_score:
+                best_match = {
+                    'document_name': document_name,
+                    'chunk_index': chunk_index,
+                    'keywords': chunk_data['keywords'],
+                    'score': score
+                }
+                highest_score = score
+
     return best_match if best_match else {}

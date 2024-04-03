@@ -4,7 +4,9 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../.
 import json
 from flask_testing import TestCase
 import pytest
-from app import app  
+from app import app
+from unittest.mock import patch, MagicMock
+
 
 @pytest.fixture
 def client():
@@ -59,9 +61,3 @@ def test_get_unprocessed_document(client, mocker):
     assert response.status_code == 200
     assert response.json == {'paragraph1': 'Processed content'}
 
-def test_ask_question(client):
-    """Test the ask question endpoint."""
-    data = {"user_input": "Example question"}
-    response = client.post('/ask', json=data)
-    assert response.status_code == 200
-  

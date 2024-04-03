@@ -1,9 +1,10 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, session
 from database_endpoint import list_available_documents, get_document_content,load_and_process_document, load_paragraph_dict_from_file
 from keywords import search_for_query, populate_keywords_to_chunks_index
 import openai
 import logging
 import os
+import csv
 from dotenv import load_dotenv
 import json
 from flask_cors import CORS
@@ -11,6 +12,7 @@ from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app)
+app.secret_key = 'debatechatbot'  
 
 @app.route('/', methods=['GET'])
 def home():
@@ -59,19 +61,26 @@ def ask_question():
     
     logging.info("Received user input for query: %s", user_input)
     
+     # Start the session log if it doesn't exist
+    if 'conversation_log' not in session:
+        session['conversation_log'] = []   
+    
     matched_content = search_for_query(user_input)
     print("Matched content found for the query: ", matched_content)
     
-    # Check if matched_content is not empty
     if matched_content:
-        # Directly access 'chunk' and 'keywords' from matched_content
-        chunk = matched_content['chunk']
-        keywords = matched_content['keywords']
-        context = f"\n{chunk}\nKeywords: {', '.join(keywords)}"
+        document_name = matched_content['document_name']
+        chunk_index = matched_content['chunk_index']
+        paragraph_dict = load_paragraph_dict_from_file(document_name)
+        if paragraph_dict and chunk_index in paragraph_dict:
+            chunk = paragraph_dict[chunk_index]['chunk']  
+            keywords = matched_content['keywords']
+            context = f"\n{chunk}\nKeywords: {', '.join(keywords)}"
+        else:
+            context = "Match found, but content could not be retrieved."
     else:
-      
         context = "No content matched the query."
-   
+        
     logging.info("Context for OpenAI API generated successfully")
     load_dotenv()  
     openai.api_key = os.getenv('OPENAI_API_KEY') 
@@ -83,16 +92,34 @@ def ask_question():
     ]
     
     response = openai.ChatCompletion.create(
-    model="gpt-3.5-turbo",
+    model="gpt-4",
     messages=conversation,
     temperature=0.7,
-    max_tokens=4000
+    max_tokens=5000
 )
     
     generated_response = response.choices[0].message['content'].strip()
+    print(response)
     logging.info("Response from OpenAI API received")
+
+     # Append the current interaction to the session log
+    session['conversation_log'].append((user_input, generated_response))
+
+    # Check if the user said 'bye', then save the conversation and clear the session log
+    if user_input.strip().lower() == 'bye':
+        save_interaction_to_csv(session['conversation_log'], 'interactions/interactions.csv')
+        session.pop('conversation_log', None)  
     return jsonify({'answer': generated_response})
 
+def save_interaction_to_csv(conversation_log, csv_path):
+    # Ensure the directory exists
+    os.makedirs(os.path.dirname(csv_path), exist_ok=True)
+
+    # Save the entire conversation log to CSV
+    with open(csv_path, 'a', newline='', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        for interaction in conversation_log:
+            writer.writerow(interaction)
 
 @app.route('/search')
 def search():

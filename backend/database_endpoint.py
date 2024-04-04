@@ -55,6 +55,9 @@ def list_available_documents():
     return docs
 
 def get_document_content(document_name):
+    if document_name == 'debate2018_.csv':
+        print("Skipping document: debate2018_.csv")
+        return []
     csv.field_size_limit(sys.maxsize)
     file_path = hf_hub_download(repo_id=repo_id, filename=document_name, use_auth_token=False)
     content = []
@@ -119,6 +122,11 @@ def load_and_process_document(content, document_name):
     Process document content into a structured dictionary with indexed paragraphs.
     Each entry in the dictionary includes the paragraph text and extracted keywords.
     """
+    
+    if document_name == 'debate2018_csv':
+        print("Skipping document: debate2018_csv")
+        return {}
+    
     if isinstance(content, str):
         paragraphs = content.split('\n\n')
     elif isinstance(content, list):
@@ -146,6 +154,11 @@ def load_and_process_document(content, document_name):
 
 # Function to load processed document content from a binary file
 def load_paragraph_dict_from_file(document_name, data_dir='./data'):
+    
+    if document_name == 'debate2018_csv':
+        print("Loading is skipped for document: debate2018_csv")
+        return None
+    
     # Construct the full path to the binary file
     file_path = os.path.join(data_dir, f'{document_name}.pkl')
 

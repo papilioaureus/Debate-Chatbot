@@ -68,17 +68,14 @@ def ask_question():
     matched_content = search_for_query(user_input)
     print("Matched content found for the query: ", matched_content)
     
+    # Check if matched_content is not empty
     if matched_content:
-        document_name = matched_content['document_name']
-        chunk_index = matched_content['chunk_index']
-        paragraph_dict = load_paragraph_dict_from_file(document_name)
-        if paragraph_dict and chunk_index in paragraph_dict:
-            chunk = paragraph_dict[chunk_index]['chunk']  
-            keywords = matched_content['keywords']
-            context = f"\n{chunk}\nKeywords: {', '.join(keywords)}"
-        else:
-            context = "Match found, but content could not be retrieved."
+        # Directly access 'chunk' and 'keywords' from matched_content
+        chunk = matched_content['chunk']
+        keywords = matched_content['keywords']
+        context = f"\n{chunk}\nKeywords: {', '.join(keywords)}"
     else:
+        # Handle case where no content is matched
         context = "No content matched the query."
         
     logging.info("Context for OpenAI API generated successfully")
@@ -95,7 +92,7 @@ def ask_question():
     model="gpt-4",
     messages=conversation,
     temperature=0.7,
-    max_tokens=5000
+    max_tokens=4500
 )
     
     generated_response = response.choices[0].message['content'].strip()

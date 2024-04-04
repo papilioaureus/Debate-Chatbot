@@ -3,12 +3,9 @@ from database_endpoint import list_available_documents, get_document_content,loa
 from keywords import search_for_query, populate_keywords_to_chunks_index
 import openai
 from datetime import datetime
-import re
 import logging
 from flask import send_file
-from io import BytesIO
 import os
-from flask_session import Session 
 from graphviz import Digraph
 import csv
 from dotenv import load_dotenv

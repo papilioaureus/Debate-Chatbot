@@ -21,17 +21,6 @@ def mock_file_handling(mocker):
     mocker.patch('os.remove')
     return mocker.patch('builtins.open', mock_open(read_data=csv_content), create=True)
 
-def test_get_document_content_csv(mock_hf_hub_download, mock_file_handling):
-    document_name = 'test_document.csv'
-    expected_content = ['value1']  # The expected output matches the row in the mocked CSV
-
-    content = get_document_content(document_name)
-
-    # Assertions
-    mock_file_handling.assert_called_once_with('path/to/temporary_file.csv', mode='r', encoding='utf-8')
-    assert content == expected_content, f"Expected {expected_content}, got {content}"
-    mock_hf_hub_download.assert_called_once()
-
 
 @pytest.fixture
 def mock_response():

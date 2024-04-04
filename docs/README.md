@@ -8,7 +8,7 @@ This project introduces a sophisticated debate simulator designed to broaden you
 
 - **Interactive Chatbot**: Engage with an intelligent chatbot that was trained on data from real debates! The integration of the 'DebateSum' dataset allows the chatbot to consistently generate intelligent text which offers insights into the stance it is prompted to take. 
 
-- **Real-time Interactive Screen**: A dynamic display showcases key points from discussions, highlighting the relationships between different arguments and the conclusions drawn from them. This visual aid enhances understanding and retention of complex discussions.
+- **Real-time Interactive Screen**: A dynamic display showcases key points from discussions. In future iterations its goal will be to highlight the relationships between different arguments and the conclusions drawn from them. This visual aid enhances understanding and retention of complex discussions.
 
 - **Diverse Perspectives**: By simulating debates and presenting a variety of perspectives, the tool encourages users to learn about and understand positions different from their own, thereby promoting a more empathetic and well-rounded worldview.
 

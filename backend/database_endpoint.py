@@ -172,10 +172,6 @@ def load_paragraph_dict_from_file(document_name, data_dir='./data'):
     # If the file does not exist, return None
     return None
 
-    
-
-
-
 
             
             

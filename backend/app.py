@@ -1,16 +1,22 @@
-from flask import Flask, jsonify, request, session
+from flask import Flask, jsonify, request, session, send_from_directory
 from database_endpoint import list_available_documents, get_document_content,load_and_process_document, load_paragraph_dict_from_file
 from keywords import search_for_query, populate_keywords_to_chunks_index
 import openai
+from datetime import datetime
+import re
 import logging
+from flask import send_file
+from io import BytesIO
 import os
+from flask_session import Session 
+from graphviz import Digraph
 import csv
 from dotenv import load_dotenv
 import json
 from flask_cors import CORS
 
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='interactions')
 CORS(app)
 app.secret_key = 'debatechatbot'  
 
@@ -77,11 +83,7 @@ def ask_question():
     else:
         # Handle case where no content is matched
         context = "No content matched the query."
-        
-    logging.info("Context for OpenAI API generated successfully")
-    load_dotenv()  
-    openai.api_key = os.getenv('OPENAI_API_KEY') 
-      
+              
     conversation = [
         {"role": "system", "content": "You are a knowledgeable assistant that provides information based on specific document content and keywords."},
         {"role": "user", "content": user_input},
@@ -96,28 +98,36 @@ def ask_question():
 )
     
     generated_response = response.choices[0].message['content'].strip()
-    print(response)
-    logging.info("Response from OpenAI API received")
-
-     # Append the current interaction to the session log
+    # Append the current interaction to the session log
     session['conversation_log'].append((user_input, generated_response))
-
-    # Check if the user said 'bye', then save the conversation and clear the session log
-    if user_input.strip().lower() == 'bye':
-        save_interaction_to_csv(session['conversation_log'], 'interactions/interactions.csv')
-        session.pop('conversation_log', None)  
-    return jsonify({'answer': generated_response})
-
-def save_interaction_to_csv(conversation_log, csv_path):
-    # Ensure the directory exists
-    os.makedirs(os.path.dirname(csv_path), exist_ok=True)
-
-    # Save the entire conversation log to CSV
-    with open(csv_path, 'a', newline='', encoding='utf-8') as file:
-        writer = csv.writer(file)
-        for interaction in conversation_log:
-            writer.writerow(interaction)
-
+    session.modified = True  # Ensure the session is marked as modified
+    logging.info("Response from OpenAI API received")
+    generate_conversation_flow(session['conversation_log'], 'interactions/conversation_flow.png')
+    return jsonify({'answer': generated_response, 'conversation_saved': True})
+    
+def generate_conversation_flow(conversation_log, output_folder):
+    # Generate a timestamped file name
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    filename = f"conversation_flow_{timestamp}.png"
+    output_path = os.path.join(output_folder, filename)
+    
+    dot = Digraph(comment='Conversation Flow')
+    prev_node = None
+    for i, (user_input, bot_response) in enumerate(conversation_log):
+        user_node = f'User_{i}'
+        bot_node = f'Bot_{i}'
+        dot.node(user_node, f'User: {user_input}')
+        dot.node(bot_node, f'Robo: {bot_response}')
+        if prev_node:
+            dot.edge(prev_node, user_node)        
+        dot.edge(user_node, bot_node)
+        prev_node = bot_node
+    
+    # Save the diagram to the specified path
+    dot.render(output_path, format='png', cleanup=True)
+    logging.info(f"Conversation flow diagram saved to {output_path}")
+        
+    
 @app.route('/search')
 def search():
     query = request.args.get('query', '')
@@ -146,6 +156,8 @@ def search():
 
    
 if __name__ == '__main__':
+    load_dotenv()  
+    openai.api_key = os.getenv('OPENAI_API_KEY') 
     populate_keywords_to_chunks_index() 
     logging.basicConfig(level=logging.INFO)
     app.run(debug=True, port=5000)

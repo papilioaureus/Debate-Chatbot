@@ -38,14 +38,12 @@ def populate_keywords_to_chunks_index():
 
     for document_name in document_names:
         paragraph_dict = load_paragraph_dict_from_file(document_name)
-        
-    if 'paragraphs' in paragraph_dict:
-        for index, data in paragraph_dict['paragraphs'].items():  # Access 'paragraphs'
-            for keyword in data['keywords']:
-                # Append a tuple of document_name and index for each keyword
-                keywords_to_chunks_index[keyword].append((document_name, index))
-    else:
-        logging.error(f"The 'paragraphs' key is missing in the dictionary for the document: {document_name}")
+        if paragraph_dict and 'paragraphs' in paragraph_dict:  # Ensure the paragraph_dict is not None and contains 'paragraphs'
+            for index, data in paragraph_dict['paragraphs'].items():
+                for keyword in data['keywords']:
+                    keywords_to_chunks_index[keyword].append((document_name, index))
+        else:
+            logging.error(f"Document {document_name} data is invalid or missing 'paragraphs' key.")
     
     logging.info("Finished populating the keywords to chunks index.")
 
@@ -71,18 +69,23 @@ def load_and_index_documents():
  
         
 def search_for_query(query, most_relevant_document):
+    print("HERE0")
     query_keywords = extract_keywords_from_text(query)
     logging.info(f"Extracted query keywords: {query_keywords}")
-
+    print("HERE1")
+    
     # Use the new function to find the most relevant document
     most_relevant_document = find_most_relevant_document(query_keywords)
     logging.info(f"Most relevant document: {most_relevant_document}")
 
+    print("HERE2")
+    
     best_match = None
     highest_score = -1
 
     for keyword in query_keywords:
         if keyword in keywords_to_chunks_index:
+            
             logging.info(f"Keyword found in index: {keyword}")
             for doc_name, chunk_index in keywords_to_chunks_index[keyword]:
                 if doc_name == most_relevant_document:  # Filter by the most relevant document
@@ -105,7 +108,14 @@ def search_for_query(query, most_relevant_document):
                                 'score': score
                             }
                             highest_score = score
+        else:
+            logging.info(f"Keyword '{keyword}' not found in index")
 
+        if best_match:
+            logging.info(f"Best match found: {best_match}")
+        else:
+            logging.info("No match found")
+    print("HERE3")
     return best_match if best_match else {}
 
 

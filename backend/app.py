@@ -86,7 +86,7 @@ def ask_question():
     ]
 
     response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4",
         messages=conversation,
         temperature=0.7,
         max_tokens=4000
@@ -94,6 +94,7 @@ def ask_question():
 
     generated_response = response.choices[0].message['content'].strip()
     logging.info("Response from OpenAI API received")
+    
     return jsonify({'answer': generated_response})
 
 

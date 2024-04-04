@@ -22,7 +22,7 @@ import pandas as pd
 import pickle
 import nltk
 import ssl
-import ast  # For safely evaluating strings containing Python expressions
+import ast  
 
 
 try:
@@ -124,7 +124,6 @@ def extract_keywords_from_text(text):
     end_time = datetime.now()
     logging.info("Total processing time: {}".format(end_time - start_time))
     return list(filtered_keywords)
-    
 
 
 # Function to load processed document content from a binary file
@@ -146,6 +145,7 @@ def load_paragraph_dict_from_file(document_name, data_dir='./data'):
 
 def find_most_relevant_document(user_input_keywords):
     # Load the CSV file
+    
     csv_file_path = '/Users/cristina/Documents/GitHub/Debate-Chatbot/backend/data/keywords_count_merged.csv'
     df = pd.read_csv(csv_file_path)
 
@@ -196,14 +196,16 @@ def load_and_process_document(content, document_name):
     for i, paragraph in enumerate(paragraphs):
         keywords = extract_keywords_from_text(paragraph)
         paragraph_dict[i] = {'chunk': paragraph, 'keywords': keywords}
-
+        print(f"Processed {len(paragraph_dict)} paragraphs from the document: {document_name}")
+    
     # Save processed content with document name reference
     data_dir = os.path.join(os.getcwd(), 'data')
     os.makedirs(data_dir, exist_ok=True)
     file_path = os.path.join(data_dir, f'{document_name}.pkl')
     
     # Include document_name in the structure saved to the .pkl file
-    data_to_save = {'OriginalDebateFileName': document_name, 'paragraphs': paragraph_dict}
+    data_to_save = {'OriginalDebateFileName': document_name, 'chunks': paragraph_dict}
+    print(f"Saving processed content to file: {file_path}")
     
     with open(file_path, 'wb') as file:
         pickle.dump(data_to_save, file)

@@ -2,9 +2,9 @@ name: debate-chatbot-ci-cd
 
 on:
   push:
-    branches: ["frontend_diagram"]
+    branches: ["frontend-diagram"]
   pull_request:
-    branches: ["frontend_diagram"]
+    branches: ["frontend-diagram"]
   workflow_dispatch:
 
 env:

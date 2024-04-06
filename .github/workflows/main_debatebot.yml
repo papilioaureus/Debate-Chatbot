@@ -70,6 +70,9 @@ jobs:
       - name: Building web app
         uses: azure/appservice-build@v2
             
+      - name: Unzip artifact for deployment
+        run: unzip release.zip
+       
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp

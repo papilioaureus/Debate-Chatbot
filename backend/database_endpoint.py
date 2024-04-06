@@ -37,16 +37,6 @@ repo_id = 'asaurasieu/debatebot'
 repo_url = 'https://huggingface.co/asaurasieu/debatebot'
 hf_read_token = os.getenv('HF_READ_TOKEN')
 
-def list_hf_repository_files(repo_url):
-    """List all files in a specified Hugging Face repository's URL."""
-    print(f'Fetching repository URL: {repo_url}')
-    response = requests.get(repo_url)
-    response.raise_for_status()
-    soup = BeautifulSoup(response.text, 'html.parser')
-    available_docs = [a['href'] for a in soup.find_all('a', {'class': 'Link--active'})]
-    print(f'Found {len(available_docs)} available documents.')
-    return [file.split('/')[-1] for file in available_docs]
-
 def list_available_documents():
     """List available .txt and .csv documents in the repository."""
     api = HfApi()

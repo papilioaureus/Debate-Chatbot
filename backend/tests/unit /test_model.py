@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../.
 
 import pytest 
 from unittest.mock import patch, MagicMock, mock_open
-from database_endpoint import list_hf_repository_files, list_available_documents, load_and_process_document, get_document_content, load_paragraph_dict_from_file
+from database_endpoint import list_available_documents, load_and_process_document, get_document_content, load_paragraph_dict_from_file
 import pickle 
 
 @pytest.fixture
@@ -31,11 +31,6 @@ def mock_response():
         mock_get.return_value = mock_response
         yield mock_get
 
-def test_list_hf_repository_files(mock_response):
-    expected_files = ['file1.txt', 'file2.csv']
-    files = list_hf_repository_files('https://huggingface.co/asaurasieu/debatebot')
-    assert files == expected_files
-    mock_response.assert_called_once()
 
 @pytest.fixture
 def mock_api():

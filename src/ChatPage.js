@@ -1,8 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const ChatPage = () => {
     const [messages, setMessages] = useState([]);
     const [currentMessage, setCurrentMessage] = useState('');
+    const [conversationDiagram, setConversationDiagram] = useState('');
+
+    useEffect(() => {
+        // Load the conversation flow diagram image when the component mounts
+        const loadImage = async () => {
+            try {
+                const diagram = require('./conversation_flow.png');
+                setConversationDiagram(diagram.default);
+            } catch (error) {
+                console.error('Error loading conversation flow diagram:', error);
+            }
+        };
+
+        loadImage();
+    }, []);
 
     const handleSendMessage = async (e) => {
         e.preventDefault(); // Prevent the form from refreshing the page
@@ -19,6 +34,7 @@ const ChatPage = () => {
 
             const data = await response.json();
             if (data.answer) {
+                // Update to include both user message and bot response
                 setMessages([...messages, { user: currentMessage, bot: data.answer }]);
             }
         } catch (error) {
@@ -53,10 +69,10 @@ const ChatPage = () => {
                 </form>
             </div>
 
-            {/* Space reserved for conversation diagram or additional content */}
+            {/* Space reserved for conversation diagram */}
             <div style={{ flex: 1, backgroundColor: '#f0f0f0', padding: '20px' }}>
                 <h2>Conversation Diagram</h2>
-                {/* Implementation of the diagram will go here */}
+                {conversationDiagram && <img src={conversationDiagram} alt="Conversation Flow" style={{ maxWidth: '100%' }} />}
             </div>
         </div>
     );

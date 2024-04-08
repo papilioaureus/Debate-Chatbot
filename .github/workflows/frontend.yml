@@ -2,9 +2,9 @@ name: debate-chatbot-ci-cd
 
 on:
   push:
-    branches: ["crislorenzo"]
+    branches: ["crislorenzo-userview"]
   pull_request:
-    branches: ["crislorenzo"]
+    branches: ["crislorenzo-userview"]
   workflow_dispatch:
 
 env:

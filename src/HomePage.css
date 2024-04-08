@@ -1,0 +1,45 @@
+/* HomePage.css */
+.homepage-container {
+    height: 95vh;
+    background-image: url('chatbot-initialpage.png');
+    background-size: cover;
+    background-position: center;
+    color: #282c34;
+    text-align: center;
+    padding: 20px;
+}
+
+.title {
+    font-size: 3.5em;
+    margin-top: 230px;
+    margin-bottom: 180px;
+    align-content: center;
+    color: white;
+    font-family: "Andale Mono";
+}
+
+.start-chat-button {
+    padding: 3px 15px;
+    font-size: 1.2em;
+    cursor: pointer;
+    color: black;
+
+    background-color: whitesmoke;
+    font-family: "Andale Mono";
+}
+
+.links {
+    position: fixed;
+    cursor: pointer;
+    bottom: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 3px 15px;
+    font-size: 1em;
+    color: black;
+    background-color: white;
+    font-family: "Andale Mono";
+}
+
+
+

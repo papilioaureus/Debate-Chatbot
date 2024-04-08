@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ChatDiagram from './ChatDiagram'; // Import the ChatDiagram component
 
 const ChatPage = () => {
     const [messages, setMessages] = useState([]);
@@ -33,10 +34,11 @@ const ChatPage = () => {
                 </form>
             </div>
 
-            {/* Space reserved for conversation diagram or additional content */}
+            {/* Space reserved for conversation diagram */}
             <div style={{ flex: 1, backgroundColor: '#f0f0f0', padding: '20px' }}>
                 <h2>Conversation Diagram</h2>
-                {/* Implementation of the diagram will go here */}
+                {/* Render the ChatDiagram component */}
+                <ChatDiagram conversation={messages.map(msg => ({ user: 'User', text: msg }))} />
             </div>
         </div>
     );
